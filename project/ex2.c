@@ -108,9 +108,20 @@ arr_fd = open(argv[1], O_WRONLY);
 i_ok = 0;
 write(arr_fd,"0",1);
 close(arr_fd);
+
 printf("arr %d 실행\n",arr[i]);
-execl("/home/lavi/project/arr", "arr", argv[1]);
-printf("arr 실패\n");
+/*execl("/home/lavi/project/arr", "arr", argv[1]);
+printf("arr 실패\n");*/
+
+sleep(5);
+//printf("%d\n",*i_ok);
+printf("arr Complete\n");
+
+int fd = open(argv[1], O_RDWR);
+write(fd,"1",1);
+close(fd);
+
+exit(0);
 }
 
 sleep(1);
@@ -121,9 +132,20 @@ j_ok = 0;
 wait_fd = open(argv[2], O_WRONLY);
 write(wait_fd,"0",1);
 close(wait_fd);
+
+
 printf("wait %d 실행\n", wait[j]);
-execl("/home/lavi/project/wait","wait",argv[2]);
-printf("wait 실패\n");
+/*execl("/home/lavi/project/wait","wait",argv[2]);
+printf("wait 실패\n");*/
+
+sleep(7);
+printf("wait Complete\n");
+
+int fd = open(argv[2], O_RDWR);
+write(fd,"1",1);
+close(fd);
+exit(0);
+
 }
 
 else if(pid == 0)
