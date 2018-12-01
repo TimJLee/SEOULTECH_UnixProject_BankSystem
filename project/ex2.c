@@ -1,14 +1,25 @@
 #include <stdio.h>
 #include<sys/types.h>
+#include<sys/ipc.h>
+#include<sys/shm.h>
 #include<unistd.h>
 #include<fcntl.h>
+
+#define KYE_NUM 9527
+#define MEM_SIZE 1024
 
 int i_ok=1;
 int j_ok=1;
 
+typedef struct element
+{
+char name[10];
+char number[2];
+}element;
 
 int main(int argc, char **argv[])
 {
+
 
 
 char buf[1];
@@ -29,6 +40,17 @@ int switch_j = 1;
 //02 --> wait
 //13 --> Complete
 //11 --> Start
+
+
+int shm_id;
+int *shm_addr;
+
+//공유메모리 생성
+shm_id = shmget((key_t)KYE_NUM,MEM_SIZE,IPC_CREAT|0666);
+
+//공유메모리첨부
+shm_addr = shmat(shm_id,0,0);
+*shm_addr = 0;
 
 
 //부모 프로세스가 넘어올때 이중으로 실행되는것을 막기위해 상태도 작성함
@@ -104,6 +126,13 @@ pid = fork();
 
 if(pid == 0 && i_ok && i<5)
 {
+//공유메모리 생성
+shm_id = shmget((key_t)KYE_NUM,MEM_SIZE,0);
+
+//공유메모리첨부
+shm_addr = shmat(shm_id,0,0);
+
+
 arr_fd = open(argv[1], O_WRONLY);
 i_ok = 0;
 write(arr_fd,"0",1);
@@ -120,6 +149,9 @@ printf("arr Complete\n");
 int fd = open(argv[1], O_RDWR);
 write(fd,"1",1);
 close(fd);
+
+printf("%d\n",*shm_addr);
+*shm_addr = (*shm_addr +1);
 
 exit(0);
 }
