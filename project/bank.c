@@ -85,14 +85,9 @@ element dequeue(QueueType *q)
    if (is_empty(q))
 
    {
-
       char mesg[] = "Queue is full";
-
       error(mesg);
-
    }
-
- 
 
    q->front = (q->front + 1) % MAX_QUEUE_SIZE;
    return q->queue[q->front];
@@ -135,8 +130,9 @@ int i=0;
 while(0 < fscanf(fp, "%d %d %s %d %d", &temp.number, &temp.account, temp.name, &temp.bankmoney, &temp.money))
 {
 
-temp.account = arr_account[i++];
-
+//temp.account = arr_account[i++];
+    arr_account[i++]=temp.account;
+    
 if(temp.number == 1)
 enqueue(wait_1, temp);
 
@@ -159,19 +155,22 @@ enqueue(wait_4,temp);
 void Deposit(QueueType *q, QueueType *complete)
 {
 
-q->ok = 0;
+    q->ok = 0;
 
 
-sleep(5);
-element temp = dequeue(q);
-temp.bankmoney += temp.money;
-temp.money = 0;
-enqueue(complete, temp);
+    sleep(5);
+    element temp = dequeue(q);
+    temp.bankmoney += temp.money;
+    temp.money = 0;
+    enqueue(complete, temp);
 
-q->ok = 1;
-////////출력
-printf("name : %s Deposit complete\n",temp.name);
-
+    q->ok = 1;
+    ////////출력
+    printf("name : %s Deposit complete\n",temp.name);
+    if((q->front-q->rear)>0)
+        printf("%d customer is left",q->front-q->rear);
+    if((q->front-q->rear)<0)
+        printf("%d customer is left",(q->front-q->rear)*-1);
 
 }
 
@@ -195,32 +194,39 @@ q->ok= 1;
 
 
 printf("name : %s WithDraw complete\n",temp.name);
-
+if((q->front-q->rear)>0)
+    printf("%d customer is left",q->front-q->rear);
+if((q->front-q->rear)<0)
+    printf("%d customer is left",(q->front-q->rear)*-1);
 }
 
 //3
 void MakeAccount(QueueType *q, QueueType *complete, int arr_account[])
 {
 //Todo
-sleep(7);
-element temp = dequeue(q);
-int random
+    q->ok = 0;
+    srand(time(NULL));
+    int randNum=rand()*10%3+2;
+    sleep(randNum);
+    element temp = dequeue(q);
 
 
-while(1)
-{
-int random; //4자리수
-
-for(int i=0; arr_account[i] != NULL
+    while(1)
+    {
+        int rand_account=rand()*100000+10000;
+        if(arr_account[i]!=rand_account){
+            temp.account = random;
+            enqueue(complete, temp);
+            q->ok= 1;
+            printf("name : %s MakeAccount complete\n",temp.name);
+            if((q->front-q->rear)>0)
+                printf("%d customer is left",q->front-q->rear);
+            if((q->front-q->rear)<0)
+                printf("%d customer is left",(q->front-q->rear)*-1);
+            break;
+        }
+    }
 }
-
-
-temp.account = random;
-
-enqueue(complete, temp);
-
-}
-
 
 
 
