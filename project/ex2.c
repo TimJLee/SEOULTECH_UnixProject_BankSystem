@@ -5,179 +5,115 @@
 #include<unistd.h>
 #include<fcntl.h>
 
-#define KYE_NUM 9527
+#define KYE_NUM_1 9527
+#define KYE_NUM_2 9528
+#define KYE_NUM_3 9529
+#define KYE_NUM_4 9530
 #define MEM_SIZE 1024
 
-int i_ok=1;
-int j_ok=1;
 
 typedef struct element
 {
-char name[10];
-char number[2];
+int name;
+int good;
 }element;
+
+typedef struct _queue
+{
+element a[200];
+int count;
+int using;
+}queue;
+
 
 int main(int argc, char **argv[])
 {
 
 
-
-char buf[1];
-int arr_fd = open(argv[1], O_RDONLY);
-int wait_fd = open(argv[2], O_RDONLY);
-
-int arr[5] = {-1,1,2,3,4};
-int wait[4] = {-1,5,6,7};
 int i=0;
 int j=0;
 
-int switch_i = 1;
-int switch_j = 1;
+int shm_id_1;
+queue *wait_1;
 
-//Status Table
-//ok || switch
+int shm_id_2;
+queue *wait_2;
 
-//02 --> wait
-//13 --> Complete
-//11 --> Start
-
-
-int shm_id;
-int *shm_addr;
 
 //공유메모리 생성
-shm_id = shmget((key_t)KYE_NUM,MEM_SIZE,IPC_CREAT|0666);
+shm_id_1 = shmget((key_t)KYE_NUM_1,MEM_SIZE,IPC_CREAT|0666);
+shm_id_2 = shmget((key_t)KYE_NUM_2,MEM_SIZE,IPC_CREAT|0666);
+
 
 //공유메모리첨부
-shm_addr = shmat(shm_id,0,0);
-*shm_addr = 0;
+wait_1 = shmat(shm_id_1,0,0);
+wait_2 = shmat(shm_id_2,0,0);
 
 
-//부모 프로세스가 넘어올때 이중으로 실행되는것을 막기위해 상태도 작성함
+//초기화
+wait_1->count = 3;
+wait_1->using =0;
+wait_2->count = 4;
+wait_2->using = 0;
+
+
+(wait_1->a[0]).good = 9;
+wait_1->a[1].good = 9;
+
+
+wait_2->a[0].good = 9;
+wait_2->a[1].good = 9;
+
 //fork문을 통해 병렬연산을 하지만 실제로는 fork문 하나를 생성시키고 그 하나의 포크문이 굉장히 빨리 돌도록 해서
 //병렬연산을 실행하는것
 
 pid_t pid;
 
-while(i<5 || j<4)
+while(wait_1->count <4 || wait_2->count<5)
 {
 
+printf("wait _1, %d\n",wait_1->a[0].good);
+printf("wait _1, %d\n",wait_1->a[1].good);
 
-arr_fd = open(argv[1], O_RDONLY);
-read(arr_fd,buf,1);
-i_ok = buf[0] -'0';
-close(arr_fd);
+printf("wait _2, %d\n",wait_2->a[0].good);
+printf("wait _2, %d\n",wait_2->a[1].good);
 
-wait_fd = open(argv[2], O_RDONLY);
-read(wait_fd,buf,1);
-j_ok = buf[0] - '0';
-close(wait_fd);
-
-
-//실행완료
-if(i_ok == 1 && switch_i == 3)
-{
-switch_i = 1;
-} 
-
-//실행중
-else if(i_ok == 0 && switch_i ==2)
-{
-switch_i = 3;
-}
+//공유메모리 생성
+shm_id_1 = shmget((key_t)KYE_NUM_1,MEM_SIZE,IPC_CREAT|0666);
+shm_id_2 = shmget((key_t)KYE_NUM_2,MEM_SIZE,IPC_CREAT|0666);
 
 
-//실행
-if(i_ok == 1 && switch_i == 1)
-{
-switch_i = 2;
-// i Buffer에 실행되기전에 해야할일 큐값 빼내기
-i++;
-
-}
-
-
-
-//실행완료
-if(j_ok == 1 && switch_j == 3)
-{
-switch_j = 1;
-} 
-
-//실행중
-else if(j_ok == 0 && switch_j ==2)
-{
-switch_j = 3;
-}
-
-
-//실행 때문에 if문 바꿈
-//실행
-if(j_ok == 1 && switch_j == 1)
-{
-switch_j = 2;
-// i Buffer에 실행되기전에 해야할일 큐값 빼내기
-j++;
-
-}
-
+//공유메모리첨부
+wait_1 = shmat(shm_id_1,0,0);
+wait_2 = shmat(shm_id_2,0,0);
 
 pid = fork();
 
-if(pid == 0 && i_ok && i<5)
+if(pid == 0 && wait_1->count != 0 && wait_1->using == 0)
 {
-//공유메모리 생성
-shm_id = shmget((key_t)KYE_NUM,MEM_SIZE,0);
-
-//공유메모리첨부
-shm_addr = shmat(shm_id,0,0);
-
-
-arr_fd = open(argv[1], O_WRONLY);
-i_ok = 0;
-write(arr_fd,"0",1);
-close(arr_fd);
-
-printf("arr %d 실행\n",arr[i]);
-/*execl("/home/lavi/project/arr", "arr", argv[1]);
-printf("arr 실패\n");*/
-
+wait_1->using =1;
 sleep(5);
-//printf("%d\n",*i_ok);
-printf("arr Complete\n");
+wait_1->a[0].good = 1;
+wait_1->a[1].good = 2;
 
-int fd = open(argv[1], O_RDWR);
-write(fd,"1",1);
-close(fd);
 
-printf("%d\n",*shm_addr);
-*shm_addr = (*shm_addr +1);
-
+printf("wait_1 Complete\n");
+wait_1->using =0;
 exit(0);
 }
 
-sleep(1);
+sleep(0.3);
 
-if(pid == 0 && j_ok && j<4)
+if(pid == 0 && wait_2->count !=0 &&wait_2->using ==0)
 {
-j_ok = 0;
-wait_fd = open(argv[2], O_WRONLY);
-write(wait_fd,"0",1);
-close(wait_fd);
-
-
-printf("wait %d 실행\n", wait[j]);
-/*execl("/home/lavi/project/wait","wait",argv[2]);
-printf("wait 실패\n");*/
-
+wait_2->using =1;
 sleep(7);
-printf("wait Complete\n");
+wait_2->a[0].good = 1;
+wait_2->a[1].good = 2;
 
-int fd = open(argv[2], O_RDWR);
-write(fd,"1",1);
-close(fd);
+wait_2->using =0;
+printf("wait_2 Complete\n");
 exit(0);
-
 }
 
 else if(pid == 0)
