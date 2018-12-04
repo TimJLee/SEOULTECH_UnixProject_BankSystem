@@ -1,0 +1,32 @@
+void Deposit(QueueType *q, QueueType *complete)
+{
+
+element temp = dequeue(q);
+temp.bankmoney += temp.money;
+temp.money = 0;
+enqueue(complete, temp);
+
+int randNum = (rand() * 10)%3 + 2;
+sleep(randNum);
+
+}
+
+
+
+
+void WithDraw(QueueType *q, QueueType *complete)
+{
+element temp = dequeue(q);
+
+
+if(temp.bankmoney - temp.money>0)
+{
+temp.bankmoney -= temp.money;
+}
+
+enqueue(complete, temp);
+
+int randNum = (rand() * 10)%3 + 2;
+sleep(randNum);
+}
+
